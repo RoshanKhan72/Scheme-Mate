@@ -1,0 +1,48 @@
+{
+  "districts": {
+    "Bengaluru Urban": [
+      "Bengaluru North",
+      "Bengaluru South",
+      "Bengaluru East",
+      "Yelahanka",
+      "Anekal"
+    ],
+    "Davanagere": [
+      "Davanagere",
+      "Harihara",
+      "Jagalur",
+      "Channagiri",
+      "Honnali"
+    ],
+    "Haveri": [
+      "Haveri",
+      "Byadgi",
+      "Hangal",
+      "Ranebennur",
+      "Savanur",
+      "Shiggaon",
+      "Hirekerur"
+    ],
+    "Mysore": [
+      "Mysore",
+      "Hunsur",
+      "K.R. Nagar",
+      "Nanjangud",
+      "T. Narasipura",
+      "H.D. Kote",
+      "Periyapatna"
+    ],
+    "Belagavi": [
+      "Belagavi",
+      "Athani",
+      "Bailhongal",
+      "Chikkodi",
+      "Gokak",
+      "Hukkeri",
+      "Khanapur",
+      "Ramdurg",
+      "Rayabag",
+      "Saundatti"
+    ]
+  }
+}
