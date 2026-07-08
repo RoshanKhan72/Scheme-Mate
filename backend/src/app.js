@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
 const swaggerUi = require('swagger-ui-express');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
@@ -8,25 +10,67 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const savedRoutes = require('./routes/savedRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const swaggerSpec = require('./config/swagger');
+const db = require('./config/db');
 
 const app = express();
 
-// Enable CORS
-app.use(cors());
+// Enable Helmet for security headers
+app.use(helmet());
+
+// Enable compression
+app.use(compression());
+
+// Configured CORS
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:8000', 'http://localhost:5500'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 
 // Global API Version Header Middleware
 app.use((req, res, next) => {
-  res.setHeader('X-API-Version', '1.0.0');
+  const version = process.env.API_VERSION || '1.0.0';
+  res.setHeader('X-API-Version', version);
   next();
 });
 
 // Body Parser Middleware (JSON parsing)
 app.use(express.json());
 
-// Base Health Check Route
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', timestamp: new Date() });
-});
+// Base Health Check Route Handler
+const healthHandler = async (req, res) => {
+  try {
+    // Verify database pool connectivity
+    await db.query('SELECT 1');
+    res.status(200).json({
+      status: 'ok',
+      version: process.env.API_VERSION || '1.0.0',
+      timestamp: new Date(),
+      database: 'connected',
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      version: process.env.API_VERSION || '1.0.0',
+      timestamp: new Date(),
+      database: 'disconnected',
+      error: error.message,
+    });
+  }
+};
+
+app.get('/health', healthHandler);
+app.get('/api/v1/health', healthHandler);
 
 // Swagger API Documentation Route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

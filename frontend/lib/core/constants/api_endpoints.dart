@@ -1,15 +1,23 @@
-import 'dart:io';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiEndpoints {
-  // If running on an Android emulator, localhost points to 10.0.2.2.
-  // Otherwise, use 10.0.2.2 or localhost based on the target execution environment.
+  // Supports configurable build-time define for production hosting
+  static const String _envBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+
   static String get baseUrl {
+    if (_envBaseUrl.isNotEmpty) {
+      return _envBaseUrl;
+    }
+    if (kIsWeb) {
+      return 'http://localhost:5000/api/v1';
+    }
     try {
       if (Platform.isAndroid) {
         return 'http://10.0.2.2:5000/api/v1';
       }
     } catch (_) {
-      // In web or environments where Platform.isAndroid throws, default to localhost
+      // Fallback if Platform checks are unsupported
     }
     return 'http://localhost:5000/api/v1';
   }

@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/responsive_layout.dart';
 
 import '../../../../features/dashboard/domain/entities/dashboard_summary.dart';
 import '../../../../features/dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../../features/schemes/domain/entities/scheme.dart';
 import '../../../../features/schemes/presentation/providers/saved_provider.dart';
-import '../../../../features/schemes/presentation/screens/scheme_detail_screen.dart';
 import '../../../profile/domain/entities/user_profile.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
-import '../../../profile/presentation/screens/profile_edit_screen.dart';
-import '../../../schemes/presentation/screens/admin_schemes_screen.dart';
-import '../../../schemes/presentation/screens/scheme_list_screen.dart';
 import '../providers/auth_provider.dart';
 import '../../../notifications/presentation/providers/notification_provider.dart';
-import '../../../notifications/presentation/screens/notification_list_screen.dart';
 import '../../../profile/presentation/widgets/feedback_dialog.dart';
+import '../../../schemes/presentation/screens/admin_schemes_screen.dart';
+import '../../../schemes/presentation/screens/scheme_list_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -112,7 +111,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ],
       ),
-      body: bodyWidget,
+      body: ResponsiveLayout(maxWidth: 1000, child: bodyWidget),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
@@ -391,11 +390,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
                             onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => SchemeDetailScreen(schemeId: scheme.id),
-                                ),
-                              );
+                              context.push('/scheme-detail/${scheme.id}');
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(16),
@@ -620,11 +615,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const ProfileEditScreen(),
-                  ),
-                );
+                context.push('/edit-profile');
               },
               child: const Text('Setup Eligibility Profile'),
             ),
@@ -652,11 +643,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       icon = Icons.warning_amber_rounded;
       color = Colors.orange;
       action = () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const ProfileEditScreen(),
-          ),
-        );
+        context.push('/edit-profile');
       };
     } else if (missingDocs > 0) {
       text = 'Submit $missingDocs missing documents to unlock $partially partially eligible government schemes.';
@@ -664,11 +651,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       icon = Icons.description_outlined;
       color = Colors.orange;
       action = () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const ProfileEditScreen(),
-          ),
-        );
+        context.push('/edit-profile');
       };
     } else if (eligible > 0) {
       text = '🎉 Verified match! You are fully eligible for $eligible government schemes.';
@@ -684,11 +667,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       text = 'Add qualifications, occupations or check lists in profile to discover matching schemes.';
       buttonText = 'Modify Profile';
       action = () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const ProfileEditScreen(),
-          ),
-        );
+        context.push('/edit-profile');
       };
     }
 
@@ -841,11 +820,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SchemeDetailScreen(schemeId: scheme.id),
-                        ),
-                      );
+                      context.push('/scheme-detail/${scheme.id}');
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -933,11 +908,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     )
                   : const Icon(Icons.arrow_forward_ios, size: 14),
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => SchemeDetailScreen(schemeId: scheme.id),
-                  ),
-                );
+                context.push('/scheme-detail/${scheme.id}');
               },
             ),
           );
@@ -999,11 +970,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => SchemeDetailScreen(schemeId: scheme.id),
-                  ),
-                );
+                context.push('/scheme-detail/${scheme.id}');
               },
             ),
           );
@@ -1177,11 +1144,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           icon: const Icon(Icons.notifications_outlined),
           tooltip: 'Notifications',
           onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const NotificationListScreen(),
-              ),
-            );
+            context.push('/notifications');
           },
         ),
         if (count > 0)

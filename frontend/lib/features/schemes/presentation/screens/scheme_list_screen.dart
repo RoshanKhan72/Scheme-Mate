@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/responsive_layout.dart';
 
 import '../../../../core/constants/location_constants.dart';
 import '../providers/eligibility_provider.dart';
 import '../providers/scheme_provider.dart';
 import '../providers/scheme_state.dart';
-import 'scheme_detail_screen.dart';
 
 class SchemeListScreen extends ConsumerStatefulWidget {
   const SchemeListScreen({super.key});
@@ -22,7 +23,7 @@ class _SchemeListScreenState extends ConsumerState<SchemeListScreen> {
   
   // Status filter for Matched mode
   String _selectedMatchStatus = 'All';
-
+  
   // Filters for Browse All mode
   String _selectedState = 'All India';
   String _selectedCategory = 'All';
@@ -56,166 +57,45 @@ class _SchemeListScreenState extends ConsumerState<SchemeListScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            // 1. Selector Segment (Browse All vs Matched Schemes)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Center(
-                        child: Text(
-                          'Database Browse',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      selected: _matchingMode == 0,
-                      onSelected: (val) {
-                        if (val) {
-                          setState(() => _matchingMode = 0);
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Center(
-                        child: Text(
-                          'Eligibility Matching',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      selected: _matchingMode == 1,
-                      onSelected: (val) {
-                        if (val) {
-                          setState(() => _matchingMode = 1);
-                          ref.read(eligibilityProvider.notifier).fetchMatchingSchemes();
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // 2. Conditional Filter Menus
-            if (_matchingMode == 0) ...[
-              // Search Input
+        child: ResponsiveLayout(
+          maxWidth: 1000,
+          child: Column(
+            children: [
+              // 1. Selector Segment (Browse All vs Matched Schemes)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search matching schemes...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              _applyBrowseFilters();
-                            },
-                          )
-                        : null,
-                  ),
-                  onSubmitted: (_) => _applyBrowseFilters(),
-                  onChanged: (text) => setState(() {}),
-                ),
-              ),
-              const SizedBox(height: 8),
-              
-              // Dropdowns scrollbar
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    _buildFilterDropdown(
-                      label: 'State: $_selectedState',
-                      icon: Icons.map_outlined,
-                      items: ['All India', 'Karnataka', ...LocationConstants.statesAndUTs.where((s) => s != 'Karnataka')],
-                      selectedValue: _selectedState,
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => _selectedState = val);
-                          _applyBrowseFilters();
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildFilterDropdown(
-                      label: 'Category: $_selectedCategory',
-                      icon: Icons.category_outlined,
-                      items: _categories,
-                      selectedValue: _selectedCategory,
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => _selectedCategory = val);
-                          _applyBrowseFilters();
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildFilterDropdown(
-                      label: 'For: $_selectedBeneficiary',
-                      icon: Icons.person_outline,
-                      items: _beneficiaries,
-                      selectedValue: _selectedBeneficiary,
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => _selectedBeneficiary = val);
-                          _applyBrowseFilters();
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ] else ...[
-              // Matched Filter dropdown
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.filter_alt_outlined, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Filter Match Status:',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.blueGrey[300] : Colors.grey[700],
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Center(
+                          child: Text(
+                            'Database Browse',
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : Colors.grey[200],
-                        borderRadius: BorderRadius.circular(10),
+                        selected: _matchingMode == 0,
+                        onSelected: (val) {
+                          if (val) {
+                            setState(() => _matchingMode = 0);
+                          }
+                        },
                       ),
-                      child: DropdownButton<String>(
-                        value: _selectedMatchStatus,
-                        underline: const SizedBox(),
-                        icon: const Icon(Icons.arrow_drop_down),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.blueGrey[800],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Center(
+                          child: Text(
+                            'Eligibility Matching',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
-                        items: _matchStatuses.map((st) {
-                          return DropdownMenuItem(value: st, child: Text(st));
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _selectedMatchStatus = val);
+                        selected: _matchingMode == 1,
+                        onSelected: (val) {
+                          if (val) {
+                            setState(() => _matchingMode = 1);
+                            ref.read(eligibilityProvider.notifier).fetchMatchingSchemes();
                           }
                         },
                       ),
@@ -223,16 +103,140 @@ class _SchemeListScreenState extends ConsumerState<SchemeListScreen> {
                   ],
                 ),
               ),
-            ],
-            const Divider(height: 16),
 
-            // 3. Matched warning checklist / List output resolve
-            Expanded(
-              child: _matchingMode == 0
-                  ? _resolveSchemesList(browseState, false)
-                  : _resolveSchemesList(matchState, true),
-            ),
-          ],
+              // 2. Conditional Filter Menus
+              if (_matchingMode == 0) ...[
+                // Search Input
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search matching schemes...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                _applyBrowseFilters();
+                              },
+                            )
+                          : null,
+                    ),
+                    onSubmitted: (_) => _applyBrowseFilters(),
+                    onChanged: (text) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Dropdowns scrollbar
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  child: Row(
+                    children: [
+                      _buildFilterDropdown(
+                        label: 'State: $_selectedState',
+                        icon: Icons.map_outlined,
+                        items: ['All India', 'Karnataka', ...LocationConstants.statesAndUTs.where((s) => s != 'Karnataka')],
+                        selectedValue: _selectedState,
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedState = val);
+                            _applyBrowseFilters();
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterDropdown(
+                        label: 'Category: $_selectedCategory',
+                        icon: Icons.category_outlined,
+                        items: _categories,
+                        selectedValue: _selectedCategory,
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedCategory = val);
+                            _applyBrowseFilters();
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterDropdown(
+                        label: 'For: $_selectedBeneficiary',
+                        icon: Icons.person_outline,
+                        items: _beneficiaries,
+                        selectedValue: _selectedBeneficiary,
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedBeneficiary = val);
+                            _applyBrowseFilters();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                // Matched Filter dropdown
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.filter_alt_outlined, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Filter Match Status:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.blueGrey[300] : Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: DropdownButton<String>(
+                          value: _selectedMatchStatus,
+                          underline: const SizedBox(),
+                          icon: const Icon(Icons.arrow_drop_down),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.blueGrey[800],
+                          ),
+                          items: _matchStatuses.map((st) {
+                            return DropdownMenuItem(value: st, child: Text(st));
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() => _selectedMatchStatus = val);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const Divider(height: 16),
+
+              // 3. Matched warning checklist / List output resolve
+              Expanded(
+                child: _matchingMode == 0
+                    ? _resolveSchemesList(browseState, false)
+                    : _resolveSchemesList(matchState, true),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -408,11 +412,7 @@ class _SchemeListScreenState extends ConsumerState<SchemeListScreen> {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => SchemeDetailScreen(schemeId: scheme.id),
-                ),
-              );
+              context.push('/scheme-detail/${scheme.id}');
             },
             child: Padding(
               padding: const EdgeInsets.all(16.0),

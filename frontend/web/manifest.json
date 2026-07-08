@@ -1,11 +1,11 @@
 {
-    "name": "scheme_mate",
-    "short_name": "scheme_mate",
+    "name": "Scheme Mate",
+    "short_name": "Scheme Mate",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1E293B",
+    "theme_color": "#6366F1",
+    "description": "Your central and state government schemes search and eligibility validator advisor.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

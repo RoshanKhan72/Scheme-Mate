@@ -1,0 +1,59 @@
+name: Flutter Web CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/flutter_web.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+        working-directory: frontend
+
+      - name: Analyze code
+        run: flutter analyze
+        working-directory: frontend
+
+      - name: Run tests
+        run: flutter test
+        working-directory: frontend
+
+      - name: Build Web
+        run: flutter build web --release --dart-define=API_BASE_URL=https://scheme-mate-backend.onrender.com/api/v1
+        working-directory: frontend
+
+      - name: Deploy to Firebase Hosting
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_TOKEN }}'
+          expires: 30d
+          projectId: scheme-mate-web
+          entryPoint: frontend

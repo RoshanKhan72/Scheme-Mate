@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/responsive_layout.dart';
 
 import '../../../../core/constants/location_constants.dart';
 import '../../domain/entities/user_profile.dart';
@@ -258,7 +260,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.of(context).pop();
+        context.pop();
       } else if (next.status == ProfileStatus.error && next.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -281,10 +283,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       body: _isLoadingLocations
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
+              child: ResponsiveLayout(
+                maxWidth: 900,
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -703,6 +707,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 ),
               ),
             ),
+          ),
     );
   }
 

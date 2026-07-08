@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/widgets/responsive_layout.dart';
 
 import '../../../../core/constants/location_constants.dart';
 import '../../domain/entities/scheme.dart';
@@ -51,45 +52,48 @@ class _AdminSchemesScreenState extends ConsumerState<AdminSchemesScreen> {
         ],
       ),
       body: SafeArea(
-        child: schemeState.status == SchemeStatus.loading
-            ? const Center(child: CircularProgressIndicator())
-            : schemeState.schemes.isEmpty
-                ? const Center(
-                    child: Text('No government schemes found. Add one to start.'),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: schemeState.schemes.length,
-                    itemBuilder: (context, index) {
-                      final scheme = schemeState.schemes[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          title: Text(
-                            scheme.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+        child: ResponsiveLayout(
+          maxWidth: 1000,
+          child: schemeState.status == SchemeStatus.loading
+              ? const Center(child: CircularProgressIndicator())
+              : schemeState.schemes.isEmpty
+                  ? const Center(
+                      child: Text('No government schemes found. Add one to start.'),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: schemeState.schemes.length,
+                      itemBuilder: (context, index) {
+                        final scheme = schemeState.schemes[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            title: Text(
+                              scheme.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              '${scheme.category} | Version ${scheme.versionNumber} | State: ${scheme.state}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+                                  onPressed: () => _openSchemeFormDialog(scheme),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                  onPressed: () => _confirmDelete(scheme),
+                                ),
+                              ],
+                            ),
                           ),
-                          subtitle: Text(
-                            '${scheme.category} | Version ${scheme.versionNumber} | State: ${scheme.state}',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                                onPressed: () => _openSchemeFormDialog(scheme),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                onPressed: () => _confirmDelete(scheme),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
+        ),
       ),
     );
   }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../profile/presentation/screens/profile_edit_screen.dart';
-import '../../../schemes/presentation/screens/scheme_detail_screen.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/responsive_layout.dart';
 import '../providers/notification_provider.dart';
 
 class NotificationListScreen extends ConsumerWidget {
@@ -31,101 +30,95 @@ class NotificationListScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Offline banner
-            if (state.isOffline)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                color: Colors.amber.withValues(alpha: 0.15),
-                child: const Row(
-                  children: [
-                    Icon(Icons.wifi_off_outlined, color: Colors.orange, size: 18),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Offline Mode: Showing cached notifications.',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange),
+        child: ResponsiveLayout(
+          maxWidth: 900,
+          child: Column(
+            children: [
+              // Offline banner
+              if (state.isOffline)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  color: Colors.amber.withValues(alpha: 0.15),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.wifi_off_outlined, color: Colors.orange, size: 18),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Offline Mode: Showing cached notifications.',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-            // Loading / empty / list displays
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => notifier.fetchNotifications(),
-                child: state.status == NotificationStatus.loading && state.notifications.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : state.notifications.isEmpty
-                        ? const Center(child: Text('No notifications found.'))
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: state.notifications.length,
-                            itemBuilder: (context, index) {
-                              final notification = state.notifications[index];
-                              
-                              // Color codes by priority
-                              Color priorityColor = Colors.blue;
-                              if (notification.priority == 'Critical') priorityColor = Colors.red;
-                              if (notification.priority == 'High') priorityColor = Colors.orange;
-                              if (notification.priority == 'Low') priorityColor = Colors.grey;
+              // Loading / empty / list displays
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => notifier.fetchNotifications(),
+                  child: state.status == NotificationStatus.loading && state.notifications.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : state.notifications.isEmpty
+                          ? const Center(child: Text('No notifications found.'))
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: state.notifications.length,
+                              itemBuilder: (context, index) {
+                                final notification = state.notifications[index];
+                                
+                                // Color codes by priority
+                                Color priorityColor = Colors.blue;
+                                if (notification.priority == 'Critical') priorityColor = Colors.red;
+                                if (notification.priority == 'High') priorityColor = Colors.orange;
+                                if (notification.priority == 'Low') priorityColor = Colors.grey;
 
-                              return Dismissible(
-                                key: Key(notification.id),
-                                direction: DismissDirection.endToStart,
-                                background: Container(
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.only(right: 20),
-                                  color: Colors.red,
-                                  child: const Icon(Icons.delete, color: Colors.white),
-                                ),
-                                onDismissed: (_) {
-                                  notifier.deleteNotification(notification.id);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Notification removed.'),
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: Duration(seconds: 1),
-                                    ),
-                                  );
-                                },
-                                child: Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(
-                                      color: notification.isRead 
-                                          ? (isDark ? Colors.blueGrey[800]! : Colors.grey[200]!)
-                                          : priorityColor.withValues(alpha: 0.5),
-                                      width: notification.isRead ? 1 : 1.5,
-                                    ),
+                                return Dismissible(
+                                  key: Key(notification.id),
+                                  direction: DismissDirection.endToStart,
+                                  background: Container(
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.only(right: 20),
+                                    color: Colors.red,
+                                    child: const Icon(Icons.delete, color: Colors.white),
                                   ),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(12),
-                                    onTap: () {
-                                      // 1. Mark as read
-                                      if (!notification.isRead) {
-                                        notifier.markAsRead(notification.id);
-                                      }
+                                  onDismissed: (_) {
+                                    notifier.deleteNotification(notification.id);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Notification removed.'),
+                                        behavior: SnackBarBehavior.floating,
+                                        duration: Duration(seconds: 1),
+                                      ),
+                                    );
+                                  },
+                                  child: Card(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(
+                                        color: notification.isRead 
+                                            ? (isDark ? Colors.blueGrey[800]! : Colors.grey[200]!)
+                                            : priorityColor.withValues(alpha: 0.5),
+                                        width: notification.isRead ? 1 : 1.5,
+                                      ),
+                                    ),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () {
+                                        // 1. Mark as read
+                                        if (!notification.isRead) {
+                                          notifier.markAsRead(notification.id);
+                                        }
 
-                                      // 2. Target deep linking routing (as requested!)
-                                      if (notification.targetType == 'scheme' && notification.targetId != null) {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) => SchemeDetailScreen(schemeId: notification.targetId!),
-                                          ),
-                                        );
-                                      } else if (notification.targetType == 'profile') {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) => const ProfileEditScreen(),
-                                          ),
-                                        );
-                                      }
-                                    },
+                                        // 2. Target deep linking routing (as requested!)
+                                        if (notification.targetType == 'scheme' && notification.targetId != null) {
+                                          context.push('/scheme-detail/${notification.targetId!}');
+                                        } else if (notification.targetType == 'profile') {
+                                          context.push('/edit-profile');
+                                        }
+                                      },
                                     child: Padding(
                                       padding: const EdgeInsets.all(16.0),
                                       child: Row(
@@ -213,8 +206,9 @@ class NotificationListScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   String _formatTime(DateTime dt) {
     final now = DateTime.now();

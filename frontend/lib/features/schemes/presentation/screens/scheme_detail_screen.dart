@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/responsive_layout.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/widgets/feedback_dialog.dart';
@@ -83,7 +85,9 @@ class _SchemeDetailScreenState extends ConsumerState<SchemeDetailScreen> {
           : scheme == null
               ? const Center(child: Text('Failed to load scheme details.'))
               : SafeArea(
-                  child: SingleChildScrollView(
+                  child: ResponsiveLayout(
+                    maxWidth: 900,
+                    child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -154,6 +158,7 @@ class _SchemeDetailScreenState extends ConsumerState<SchemeDetailScreen> {
                     ),
                   ),
                 ),
+              ),
     );
   }
 
