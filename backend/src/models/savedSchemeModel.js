@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const { pool } = require('../config/db');
 
 /**
  * Bookmark/Save a government scheme for a user

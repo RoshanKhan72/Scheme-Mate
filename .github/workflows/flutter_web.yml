@@ -48,6 +48,10 @@ jobs:
         run: flutter build web --release --dart-define=API_BASE_URL=https://scheme-mate-backend.onrender.com/api/v1
         working-directory: frontend
 
+      - name: Build Android Debug APK
+        run: flutter build apk --debug
+        working-directory: frontend
+
       - name: Deploy to Firebase Hosting
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: FirebaseExtended/action-hosting-deploy@v0
