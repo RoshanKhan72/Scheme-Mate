@@ -3,8 +3,14 @@ const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
 require('dotenv').config();
 
+if (!process.env.JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL ERROR: JWT_SECRET environment variable is not defined in production.');
+  }
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'scheme_mate_super_secret_key_change_me_in_production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
 /**
  * Generate a JWT token for the user
@@ -13,6 +19,7 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
  */
 function generateToken(userId) {
   return jwt.sign({ id: userId }, JWT_SECRET, {
+    algorithm: 'HS256',
     expiresIn: JWT_EXPIRES_IN,
   });
 }

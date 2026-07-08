@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
+const { rateLimit } = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
@@ -37,6 +38,46 @@ app.use(cors({
   credentials: true,
 }));
 
+// Rate limiting configurations
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limit each IP to 100 requests per window
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes.' },
+  handler: (req, res, next, options) => {
+    const logger = require('./utils/logger');
+    logger.warn('Rate limit exceeded (General)', { ip: req.ip, path: req.path });
+    res.status(options.statusCode).send(options.message);
+  }
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 5, // Limit each IP to 5 requests per window
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts from this IP, please try again after 15 minutes.' },
+  handler: (req, res, next, options) => {
+    const logger = require('./utils/logger');
+    logger.warn('Rate limit exceeded (Login)', { ip: req.ip, path: req.path, email: req.body?.email });
+    res.status(options.statusCode).send(options.message);
+  }
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 10, // Limit each IP to 10 requests per window
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many accounts created from this IP, please try again after 15 minutes.' },
+  handler: (req, res, next, options) => {
+    const logger = require('./utils/logger');
+    logger.warn('Rate limit exceeded (Registration)', { ip: req.ip, path: req.path, email: req.body?.email });
+    res.status(options.statusCode).send(options.message);
+  }
+});
+
 // Global API Version Header Middleware
 app.use((req, res, next) => {
   const version = process.env.API_VERSION || '1.0.0';
@@ -44,8 +85,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Body Parser Middleware (JSON parsing)
-app.use(express.json());
+// Body Parser Middleware with explicit payload limits (10kb)
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ limit: '10kb', extended: true }));
+
+// Apply rate limits to specific route prefixes
+app.use('/api/v1/auth/login', loginLimiter);
+app.use('/api/v1/auth/register', registerLimiter);
+app.use('/api', generalLimiter);
 
 // Base Health Check Route Handler
 const healthHandler = async (req, res) => {
@@ -93,9 +140,11 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   const logger = require('./utils/logger');
   logger.error('Unhandled Server Error', err, { path: req.path, method: req.method });
-  res.status(500).json({
+  
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.status(err.status || 500).json({
     success: false,
-    message: err.message || 'Internal Server Error',
+    message: isProduction ? 'Internal Server Error' : (err.message || 'Internal Server Error'),
   });
 });
 

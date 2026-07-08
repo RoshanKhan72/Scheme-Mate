@@ -1,4 +1,5 @@
 const schemeModel = require('../models/schemeModel');
+const logger = require('../utils/logger');
 
 /**
  * @openapi
@@ -311,6 +312,8 @@ async function createScheme(req, res) {
       start_date, end_date, beneficiary_types, tags
     });
 
+    logger.info('Admin created scheme', { adminId: req.user.id, schemeId: created.id, schemeName: name });
+
     return res.status(201).json({
       success: true,
       message: 'Government scheme added successfully.',
@@ -429,6 +432,8 @@ async function updateScheme(req, res) {
       console.error('Failed to trigger saved scheme update notifications:', e);
     }
 
+    logger.info('Admin updated scheme', { adminId: req.user.id, schemeId: id, schemeName: name, version: updated.version_number });
+
     return res.status(200).json({
       success: true,
       message: 'Government scheme updated successfully.',
@@ -481,6 +486,8 @@ async function deleteScheme(req, res) {
         message: 'Scheme not found.',
       });
     }
+
+    logger.info('Admin deleted scheme', { adminId: req.user.id, schemeId: id });
 
     return res.status(200).json({
       success: true,
