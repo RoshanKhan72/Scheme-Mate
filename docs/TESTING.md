@@ -19,28 +19,41 @@ graph TD
 
 ## 2. Express Backend Testing
 
-### A. Environment Setup
-Backend integration tests require an isolated PostgreSQL database to prevent test run overlaps from polluting development data.
-1. Configure `DATABASE_URL_TEST` in your environment (or inside your local `.env` file):
-   ```bash
-   DATABASE_URL_TEST=postgresql://postgres:postgres@localhost:5432/scheme_mate_test
-   ```
-2. Execute initial database migrations to create the database schema:
-   ```bash
-   cd backend
-   npm run migrate
-   ```
+> [!WARNING]
+> **Test Database Safety Warning**
+> Never point `DATABASE_URL_TEST` to your development or production database. Integration tests intentionally wipe tables and insert mock seeds during the test cycle.
 
-### B. Running Tests
-- **Run all tests (Unit + Integration)**:
+### A. Environment Configuration Checklist
+Create a local `.env.test` file or export the following variables in your shell environment:
+
+| Variable | Required Value | Description |
+| :--- | :--- | :--- |
+| `DATABASE_URL_TEST` | `postgresql://...` | A completely separate test database connection string |
+| `JWT_SECRET` | `test_jwt_secret_key_at_least_32_chars_long` | Signature secret for testing auth tokens |
+| `NODE_ENV` | `test` | Switches Express error logging mode |
+| `API_VERSION` | `1.0.0` | Injected version identifier header |
+
+Initialize the database schema:
+```bash
+cd backend
+npm run migrate
+```
+
+### B. Running Tests Locally vs CI
+
+- **Run all tests (Local CLI)**:
+   ```bash
+   node --test --test-concurrency=1 tests/**/*.test.js
+   ```
+- **Run all tests (via NPM script)**:
    ```bash
    npm test
    ```
-   *Note: Integration tests are executed sequentially (`--test-concurrency=1`) to prevent PostgreSQL locks and deadlocks during table truncations.*
+   *Note: Integration tests are executed sequentially (`--test-concurrency=1`) to prevent PostgreSQL transaction locks and deadlocks during concurrent table truncations.*
 
 - **Run tests with coverage**:
    ```bash
-   npm run test -- --experimental-test-coverage
+   node --test --experimental-test-coverage tests/**/*.test.js
    ```
 
 ### C. Coverage Quality Goals for RC1
@@ -68,19 +81,21 @@ Mocked integration tests use the `MockHttpClient` interceptor inside `integratio
     ```bash
     flutter test -d windows integration_test/app_test.dart
     ```
-  - **Mobile Target**:
+  - **Chrome Web (Headless)**:
     ```bash
-    flutter test -d android integration_test/app_test.dart
+    flutter test -d chrome integration_test/app_test.dart
     ```
 
-### C. End-to-End (E2E) Tests (Real API)
-E2E tests run the frontend code directly against a live running Express backend and the isolated test database.
+### C. Device-Backed End-to-End (E2E) Tests (Real API)
+> [!NOTE]
+> Device-backed integration tests use `flutter drive` (or the native Flutter integration workflow) while mocked widget integration tests can be executed with standard `flutter test`.
+
 1. Start the backend in test mode:
    ```bash
    cd backend
    NODE_ENV=test npm start
    ```
-2. Run the integration test targeting your device/browser:
+2. Run the integration driver targeting your device/browser:
    ```bash
    cd frontend
    flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart -d chrome
@@ -92,24 +107,33 @@ E2E tests run the frontend code directly against a live running Express backend 
 
 We use **GitHub Actions** to automate pull request and push checks:
 
-- **Fast Checks (Run on every Push/PR)**:
-  - **Backend**: Launches a PostgreSQL service container, runs database migrations from scratch, installs dependencies, and runs `npm test`.
-  - **Frontend**: Installs dependencies (`flutter pub get`), runs semantic check (`flutter analyze`), runs widget tests (`flutter test`), compiles Web release bundle (`flutter build web --release`), and compiles Android APK (`flutter build apk --debug`).
-- **Scheduled Checks (Nightly / Release Pipelines)**:
-  - Executes slower device-framed integration tests and Lighthouse performance audits.
+- **Fast Checks (Required before merge)**: Runs on every push/PR to block broken code:
+  - **Backend**: Launches a PostgreSQL service container, runs database migrations from scratch to verify schema integrity, and runs `npm test`.
+  - **Frontend**: Runs `flutter analyze`, `flutter test`, and builds the target packages (`flutter build web --release` and `flutter build apk --debug`) to prevent build regressions.
+- **Nightly Checks (Non-blocking release validation)**: Runs on a schedule to execute slower device-framed integration tests and Lighthouse performance audits.
 
 ---
 
 ## 5. Troubleshooting Common Issues
 
 ### 1. PostgreSQL Deadlocks (`code: 40P01`)
-- **Reason**: Test files are running in parallel and trying to run table truncates concurrently.
+- **Reason**: Test files are running in parallel and trying to execute table truncates concurrently.
 - **Solution**: Enforce sequential test concurrency: `node --test --test-concurrency=1 tests/**/*.test.js`.
 
 ### 2. Missing SharedPreferences mock
 - **Reason**: Flutter widget tests accessing disk storage throw missing initial values exceptions.
 - **Solution**: Call `SharedPreferences.setMockInitialValues({});` before starting widget pumps.
 
-### 3. Missing `JWT_SECRET` in Test Mode
-- **Reason**: Backend throws a fatal startup crash if `JWT_SECRET` is not set in production/test configurations.
-- **Solution**: Set a default placeholder secret (at least 32 characters) inside your local workflow configurations.
+### 3. Port Already in Use (`EADDRINUSE`)
+- **Reason**: Another backend instance is already running on the same local port (usually `5000` or `8080`).
+- **Solution**: Kill the existing node process or configure the server to use a different port in your environment: `PORT=5001 npm test`.
+
+---
+
+## 6. Future Testing Roadmap
+
+For subsequent versions, we intend to implement:
+- **Browser Automation**: Automated E2E web checks using Playwright or Selenium.
+- **Visual Regression Testing**: Goldens and snapshot rendering checks on widgets.
+- **API Contract Testing**: Verify Express routing alignment automatically using OpenAPI spec validators.
+- **Load Testing**: Peak capacity measurements using k6 or Artillery.
